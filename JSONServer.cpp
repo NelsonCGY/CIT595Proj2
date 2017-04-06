@@ -13,102 +13,128 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
 #include <string>
 #include <iostream>
 using namespace std;
+//??include "ReadUSB.cpp" ?
+
+pthread_mutex_t lock;
+
+//tentatively
+void parse_request(string request, string& key, string& value) {
+	int start = request.find("|");
+	string sub = request.substr(start + 1);
+	vector<string> tokens;
+	split(token, sub, boost::is_any_of(" "), boost::token_compress_on);
+	key = token[1];
+	value = token[2];
+}
 
 int start_server(int PORT_NUMBER)
 {
 
-      // structs to represent the server and client
-      struct sockaddr_in server_addr,client_addr;    
+    struct sockaddr_in server_addr,client_addr;    
       
-      int sock; // socket descriptor
+    int sock; // socket descriptor
 
-      // 1. socket: creates a socket descriptor that you later use to make other system calls
-      if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-	perror("Socket");
-	exit(1);
-      }
-      int temp;
-      if (setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&temp,sizeof(int)) == -1) {
-	perror("Setsockopt");
-	exit(1);
-      }
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		perror("Socket");
+		exit(1);
+    }
+    int temp;
+    if (setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&temp,sizeof(int)) == -1) {
+		perror("Setsockopt");
+		exit(1);
+    }
 
-      // configure the server
-      server_addr.sin_port = htons(PORT_NUMBER); // specify port number
-      server_addr.sin_family = AF_INET;         
-      server_addr.sin_addr.s_addr = INADDR_ANY; 
-      bzero(&(server_addr.sin_zero),8); 
+    server_addr.sin_port = htons(PORT_NUMBER); // specify port number
+    server_addr.sin_family = AF_INET;         
+    server_addr.sin_addr.s_addr = INADDR_ANY; 
+    bzero(&(server_addr.sin_zero),8); 
       
-      // 2. bind: use the socket and associate it with the port number
-      if (bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1) {
-	perror("Unable to bind");
-	exit(1);
-      }
+    if (bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1) {
+        perror("Unable to bind");
+	    exit(1);
+    }
 
-      // 3. listen: indicates that we want to listn to the port to which we bound; second arg is number of allowed connections
-      if (listen(sock, 5) == -1) {
-	perror("Listen");
-	exit(1);
-      }
-          
-      // once you get here, the server is set up and about to start listening
-      cout << endl << "Server configured to listen on port " << PORT_NUMBER << endl;
-      fflush(stdout);
-     
+    if (listen(sock, 5) == -1) {
+	    perror("Listen");
+	    exit(1);
+    }
+         
+    cout << endl << "Server configured to listen on port " << PORT_NUMBER << endl;
+    fflush(stdout);
+    
+	while(1) {
+	    int sin_size = sizeof(struct sockaddr_in);
+	    int listenfd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
+	    cout << "Server got a connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << endl;
+	      
+	    char request_char[1024] = {0};
+	      
+	    int bytes_received = recv(listenfd,request_char,1024,0);
+	    request_char[bytes_received] = '\0';
+	    cout << "Here comes the message:" << endl;
+	    cout << request_char << endl;
+	    string request_str = request_char;
 
-      // 4. accept: wait here until we get a connection on that port
-      int sin_size = sizeof(struct sockaddr_in);
-      int fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
-      cout << "Server got a connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << endl;
-      
-      // buffer to read data into
-      char request[1024];
-      
-      // 5. recv: read incoming message into buffer
-      int bytes_received = recv(fd,request,1024,0);
-      // null-terminate the string
-      request[bytes_received] = '\0';
-      cout << "Here comes the message:" << endl;
-      cout << request << endl;
+	    string key;
+	    string value;
+	    parse_request(request_str, key, value);
 
+	    //string reply = "{\n\"name\": \"cit595\"\n}\n";
+	    string reply;
+	    if (key == "now") {
+	    	reply = getNow();
+	    }
+	    if (key == "max") {
+	    	reply = getMax();
+	    }
+	    if (key == "min") {
+	    	reply = getMin();
+	    }
+	    if (key == "avg") {
+			reply = getAvg();
+	    }
+	    if (key == "unit") {
+	    	//pthread_mutex_lock(&lock);
+	    	setCF();
+	    	//pthread_mutex_unlock(&lock);
+	    	//reply = "Sucess?"
+	    }
+	    if (key == "mode") {
 
-      
-      // this is the message that we'll send back
-      /* it actually looks like this:
-        {
-           "name": "cit595"
-        }
-      */
-      string reply = "{\n\"name\": \"cit595\"\n}\n";
-      
-      // 6. send: send the message over the socket
-      // note that the second argument is a char*, and the third is the number of chars
-      send(fd, reply.c_str(), reply.length(), 0);
-      //printf("Server sent message: %s\n", reply);
-
-      // 7. close: close the socket connection
-      close(fd);
-      close(sock);
-      cout << "Server closed connection" << endl;
+	    }
   
-      return 0;
+	    send(listenfd, reply.c_str(), reply.length(), 0);
+	    printf("Server sent message: %s\n", reply);
+	    
+	}
+	//close(fd);
+    close(sock);
+    cout << "Server closed connection" << endl;
+    return 0;
 } 
 
 
 
 int main(int argc, char *argv[])
 {
-  // check the number of arguments
-  if (argc != 2)
+	if (argc != 3)
     {
-      cout << endl << "Usage: server [port_number]" << endl;
-      exit(0);
+    	cout << endl << "Usage: server [port_number] [USB port]" << endl;
+    	exit(0);
     }
 
-  int PORT_NUMBER = atoi(argv[1]);
-  start_server(PORT_NUMBER);
+  
+	initUSB(argv[2]);
+	config(fd);
+
+	pthread_t read_thread;
+	pthread_create(read_thread, NULL, reading, NULL);
+
+	int PORT_NUMBER = atoi(argv[1]);
+	start_server(PORT_NUMBER);
 }
 
