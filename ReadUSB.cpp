@@ -92,21 +92,20 @@ void* reading(void* p)
 {
     nowT = 0;
     total = 0;
-    long i = 0;
     char buffer[200] = {0};
-    time_t now;
+    time_t now, pre = time(NULL);
     while(!end)
     {
         int get = read(fd, buffer, 199);
         if(get)
         {
             canGet = true;
-            i++;
-            if(i < 5000000)
+            now = time(NULL);
+            if(now - pre < 1)
             {
                 continue;
             }
-            i = 0;
+            pre = now;
             double T;
             vector<string> tokens;
             split(tokens, buffer, boost::is_any_of(" "), boost::token_compress_on);
@@ -123,7 +122,7 @@ void* reading(void* p)
                     record.push(newT);
                     maxT.push(newT);
                     minT.push(newT);
-                    cout<< "Get temp: " << T << endl;
+                    cout<< "\nGet temp: " << T << endl;
                     break;
                 }
             }

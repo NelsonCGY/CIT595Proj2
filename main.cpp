@@ -29,7 +29,7 @@ void* Quit(void* p)
         }
     }
     running = false;
-    cout << "Request to quit!" << endl;
+    cout << "\nRequest to quit!" << endl;
     return NULL;
 }
 
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     while(running)
     {
         now = time(NULL);
-        if(now - pre < 2)
+        if(now - pre < 1)
         {
             continue;
         }
@@ -66,11 +66,11 @@ int main(int argc, char *argv[])
         }
         else
         {
-            cout << "Send response:\n" << getJason() << endl;
+            cout << "\nSend response:\n" << getJason() << endl;
         }
     }
 
     pthread_join(read, NULL);
     pthread_join(shut, NULL);
-    cout << "System shut down." << endl;
+    cout << "\nSystem shut down." << endl;
 }
