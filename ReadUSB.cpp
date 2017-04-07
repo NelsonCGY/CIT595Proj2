@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <boost/algorithm/string.hpp>
 #include <vector>
 #include <queue>
@@ -96,10 +97,10 @@ void* reading(void* p)
     time_t now;
     while(!end)
     {
-        canGet = true;
         int get = read(fd, buffer, 199);
         if(get)
         {
+            canGet = true;
             i++;
             if(i < 5000000)
             {
@@ -122,84 +123,112 @@ void* reading(void* p)
                     record.push(newT);
                     maxT.push(newT);
                     minT.push(newT);
+                    cout<< "Get temp: " << T << endl;
                     break;
                 }
             }
         }
-        else{
+        else
+        {
             canGet = false;
             //sleep(10); //wait for sensor to restart
         }
         now = time(NULL);
-        while(!record.empty() && (now - record.front().time > limit)){
+        while(!record.empty() && (now - record.front().time > limit))
+        {
             total -= record.front().temperature; // if the temperature is recorded an hour ago, then reduce it from total and pop from queue
             record.pop();
         }
-        while(!maxT.empty() && (now - maxT.top().time > limit)){
+        while(!maxT.empty() && (now - maxT.top().time > limit))
+        {
             maxT.pop();
         }
-        while(!minT.empty() && (now - minT.top().time > limit)){
+        while(!minT.empty() && (now - minT.top().time > limit))
+        {
             minT.pop();
         }
     }
     return NULL;
 }
 
-void quit(){
+void quit()
+{
     end = true;
 }
 
-void setCF(){
+void setCF()
+{
     //write(fd, buffer, 199);
-    if(isCelsius){
+    if(isCelsius)
+    {
         isCelsius = false;
     }
-    else{
+    else
+    {
         isCelsius = true;
     }
 }
 
-double getNow(){
-    if(!canGet){
-        return -1000.0;
-    }
-    if(isCelsius){
+double getNow()
+{
+    if(isCelsius)
+    {
         return nowT;
     }
     return nowT * 1.8 + 32.0;
 }
 
-double getAvg(){
-    if(!canGet){
-        return -1000.0;
-    }
+double getAvg()
+{
     double avg;
     int n = record.empty()? 1 : record.size();
     avg = total/(double)n;
-    if(isCelsius){
+    if(isCelsius)
+    {
         return avg;
     }
     return avg * 1.8 + 32.0;
 }
 
-double getMax(){
-    if(!canGet){
-        return -1000.0;
-    }
+double getMax()
+{
     double T = maxT.empty()? 0.0 : maxT.top().temperature;
-    if(isCelsius){
+    if(isCelsius)
+    {
         return T;
     }
     return T * 1.8 + 32.0;
 }
 
-double getMin(){
-    if(!canGet){
-        return -1000.0;
-    }
+double getMin()
+{
     double T = minT.empty()? 0.0 : minT.top().temperature;
-    if(isCelsius){
+    if(isCelsius)
+    {
         return T;
     }
     return T * 1.8 + 32.0;
+}
+
+bool canGetT()
+{
+    return canGet;
+}
+
+string getJason()
+{
+    ostringstream real, avg, maxT, minT;
+    real << getNow();
+    avg << getAvg();
+    maxT << getMax();
+    minT << getMin();
+    string head = "{\n";
+    string mid = "\"\n";
+    string tail = "}\n";
+    string realS = "\"real\": \"";
+    string avgS = "\"average\": \"";
+    string maxS = "\"max\": \"";
+    string minS = "\"min\": \"";
+    string response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + tail;
+    return response;
 }

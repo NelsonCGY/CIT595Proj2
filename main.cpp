@@ -4,16 +4,15 @@
 #include <string.h>
 #include <string>
 #include <pthread.h>
+#include <ctime>
 using namespace std;
 
 int initUSB(char *argv);
 void* reading(void* p);
 void quit();
 void setCF();
-double getNow();
-double getAvg();
-double getMax();
-double getMin();
+string getJason();
+bool canGetT();
 
 bool running;
 
@@ -52,9 +51,23 @@ int main(int argc, char *argv[])
     }
     running = true;
 
+    time_t now, pre = time(NULL);
     while(running)
     {
-        cout<<"Real time temp: "<<getNow()<<"   average temp: "<<getAvg()<<"   max: "<<getMax()<<"   min: "<<getMin()<<endl;
+        now = time(NULL);
+        if(now - pre < 2)
+        {
+            continue;
+        }
+        pre = now;
+        if(!canGetT())
+        {
+            cout << "Disconnected!" << endl;
+        }
+        else
+        {
+            cout << "Send response:\n" << getJason() << endl;
+        }
     }
 
     pthread_join(read, NULL);
