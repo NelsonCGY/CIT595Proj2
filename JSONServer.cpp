@@ -16,10 +16,43 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <pthread.h>
 #include <string>
 #include <iostream>
+#include <ctime>
 using namespace std;
-//??include "ReadUSB.cpp" ?
 
-pthread_mutex_t lock;
+int initUSB(char *argv);
+void* reading(void* p);
+void quit();
+void setCF();
+string getJason();
+bool canGetT();
+
+int start_server(int);
+void* Quit(void*);
+
+bool running;
+
+int main(int argc, char *argv[])
+{
+	if (argc != 3) {
+    		cout << endl << "Usage: server [port_number] [USB port]" << endl;
+    		exit(0);
+	}
+
+  
+	initUSB(argv[2]);
+	config(fd);
+
+	pthread_t read_thread;
+	pthread_t shut; // thread for shutting down the system
+    	if(pthread_create(&read_thread,NULL,reading,NULL)!=0 || pthread_create(&shut,NULL,Quit,NULL)!=0) {
+        	perror("read create failed");
+        	exit(0);
+    	}
+	running = true;
+
+	int PORT_NUMBER = atoi(argv[1]);
+	start_server(PORT_NUMBER);
+}
 
 //tentatively
 void parse_request(string request, string& key, string& value) {
@@ -66,7 +99,7 @@ int start_server(int PORT_NUMBER)
     cout << endl << "Server configured to listen on port " << PORT_NUMBER << endl;
     fflush(stdout);
     
-	while(1) {
+	while(running) {
 	    int sin_size = sizeof(struct sockaddr_in);
 	    int listenfd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
 	    cout << "Server got a connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << endl;
@@ -83,32 +116,15 @@ int start_server(int PORT_NUMBER)
 	    string value;
 	    parse_request(request_str, key, value);
 
-	    //string reply = "{\n\"name\": \"cit595\"\n}\n";
 	    string reply;
-	    if (key == "now") {
-	    	reply = getNow();
+	    if (!canGetT()){
+		    //handle cannot get
 	    }
-	    if (key == "max") {
-	    	reply = getMax();
+	    else {
+		    reply = getJson();
+  		    send(listenfd, reply.c_str(), reply.size(), 0);
+	    	    printf("Server sent message: %s\n", reply);
 	    }
-	    if (key == "min") {
-	    	reply = getMin();
-	    }
-	    if (key == "avg") {
-			reply = getAvg();
-	    }
-	    if (key == "unit") {
-	    	//pthread_mutex_lock(&lock);
-	    	setCF();
-	    	//pthread_mutex_unlock(&lock);
-	    	//reply = "Sucess?"
-	    }
-	    if (key == "mode") {
-
-	    }
-  
-	    send(listenfd, reply.c_str(), reply.length(), 0);
-	    printf("Server sent message: %s\n", reply);
 	    
 	}
 	//close(fd);
@@ -117,24 +133,19 @@ int start_server(int PORT_NUMBER)
     return 0;
 } 
 
-
-
-int main(int argc, char *argv[])
+void* Quit(void* p)
 {
-	if (argc != 3)
+    string q;
+    while(1)
     {
-    	cout << endl << "Usage: server [port_number] [USB port]" << endl;
-    	exit(0);
+        cin >> q;
+        if(q == "q")
+        {
+            quit();
+            break;
+        }
     }
-
-  
-	initUSB(argv[2]);
-	config(fd);
-
-	pthread_t read_thread;
-	pthread_create(read_thread, NULL, reading, NULL);
-
-	int PORT_NUMBER = atoi(argv[1]);
-	start_server(PORT_NUMBER);
+    running = false;
+    cout << "Request to quit!" << endl;
+    return NULL;
 }
-
