@@ -9,6 +9,7 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <boost/algorithm/string.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -17,7 +18,9 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <string>
 #include <iostream>
 #include <ctime>
+#include <vector>
 using namespace std;
+using namespace boost;
 
 int initUSB(char *argv);
 void* reading(void* p);
@@ -38,9 +41,7 @@ int main(int argc, char *argv[])
     		exit(0);
 	}
 
-  
 	initUSB(argv[2]);
-	config(fd);
 
 	pthread_t read_thread;
 	pthread_t shut; // thread for shutting down the system
@@ -59,9 +60,9 @@ void parse_request(string request, string& key, string& value) {
 	int start = request.find("|");
 	string sub = request.substr(start + 1);
 	vector<string> tokens;
-	split(token, sub, boost::is_any_of(" "), boost::token_compress_on);
-	key = token[1];
-	value = token[2];
+	split(tokens, sub, boost::is_any_of(" "), boost::token_compress_on);
+	key = tokens[1];
+	value = tokens[2];
 }
 
 int start_server(int PORT_NUMBER)
@@ -121,13 +122,12 @@ int start_server(int PORT_NUMBER)
 		    //handle cannot get
 	    }
 	    else {
-		    reply = getJson();
+		    reply = getJason();
   		    send(listenfd, reply.c_str(), reply.size(), 0);
-	    	    printf("Server sent message: %s\n", reply);
+	    	printf("Server sent message: %s\n", reply.c_str());
 	    }
 	    
 	}
-	//close(fd);
     close(sock);
     cout << "Server closed connection" << endl;
     return 0;
