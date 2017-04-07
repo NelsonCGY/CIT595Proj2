@@ -53,6 +53,9 @@ int main(int argc, char *argv[])
 
 	int PORT_NUMBER = atoi(argv[1]);
 	start_server(PORT_NUMBER);
+
+	pthread_join(read_thread, NULL);
+	pthread_join(shut, NULL);
 }
 
 //tentatively
@@ -111,23 +114,24 @@ int start_server(int PORT_NUMBER)
 	    request_char[bytes_received] = '\0';
 	    cout << "Here comes the message:" << endl;
 	    cout << request_char << endl;
-	    string request_str = request_char;
 
-	    string key;
-	    string value;
-	    parse_request(request_str, key, value);
+	    /* parse post reqeust */
+	    char* token;
+	    char key[1024];
+	    strtok(request_char, "\n");
+	    while(token != NULL) {
+	    	strcpy(key, token);
+	    	token = strtok(NULL, "\n");
+	    }
 
-	    string reply;
-	    if (!canGetT()){
-		    //handle cannot get
-	    }
-	    else {
-		    reply = getJason();
-  		    send(listenfd, reply.c_str(), reply.size(), 0);
-	    	printf("Server sent message: %s\n", reply.c_str());
-	    }
-	    
+	    /* CF conversion */
+	    if (strncmp(key, "unit", 4) == 0) setCF();
+
+	    string reply = getJason();
+	    send(listenfd, reply.c_str(), reply.size(), 0);
+    	printf("Server sent message: %s\n", reply.c_str());
 	}
+	    
     close(sock);
     cout << "Server closed connection" << endl;
     return 0;
