@@ -7,11 +7,11 @@
 #include <ctime>
 using namespace std;
 
-int initUSB(char *argv);
+int initUSB();
 void* reading(void* p);
 void quit();
 void setCF();
-string getJason();
+string getJson();
 bool canGetT();
 
 bool running;
@@ -27,6 +27,10 @@ void* Quit(void* p)
             quit();
             break;
         }
+        else if(q == "s")
+        {
+            setCF();
+        }
     }
     running = false;
     cout << "\nRequest to quit!" << endl;
@@ -35,13 +39,12 @@ void* Quit(void* p)
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3)
+    if (argc < 2)
     {
-        cout << "Please specify the name of the serial port (USB) device file and port number!" << endl;
+        cout << "Please specify port number!" << endl;
         exit(0);
     }
-    char* file_name = argv[1];
-    initUSB(file_name);
+    initUSB();
     pthread_t read; // thread for reading from sensor
     pthread_t shut; // thread for shutting down the system
     if(pthread_create(&read,NULL,reading,NULL)!=0 || pthread_create(&shut,NULL,Quit,NULL)!=0)
@@ -62,11 +65,11 @@ int main(int argc, char *argv[])
         pre = now;
         if(!canGetT())
         {
-            cout << "Disconnected!" << endl;
+            cout << "\nDisconnected!" << endl;
         }
         else
         {
-            cout << "\nSend response:\n" << getJason() << endl;
+            cout << "\nSend response:\n" << getJson() << endl;
         }
     }
 

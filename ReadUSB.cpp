@@ -67,72 +67,92 @@ void configure(int fd)
     tcsetattr(fd, TCSANOW, &pts);
 }
 
-void initUSB(char *argv)
+void initUSB()
 {
-    // try to open the file for reading and writing
-    fd = open(argv, O_RDWR | O_NOCTTY | O_NDELAY);
+    string file = "/dev/ttyACM0"; // auto detect USB port, need to change on different computer
+    char portN = '1';
+    while(!end)
+    {
+        char* argv = &file[0];
+        fd = open(argv, O_RDWR | O_NOCTTY | O_NDELAY);
 
-    if (fd < 0)
-    {
-        perror("Could not open file");
-        exit(1);
+        if (fd < 0)
+        {
+            sleep(1);
+            cout << "\nFailed to open port number " << file << endl;
+            file[11] = portN;
+            if(portN == '5')
+            {
+                portN = '0';
+            }
+            else
+            {
+                portN++;
+            }
+        }
+        else
+        {
+            cout << "\nSuccessfully opened " << argv << " for reading/writing" << endl;
+            break;
+        }
     }
-    else
-    {
-        cout << "Successfully opened " << argv << " for reading/writing" << endl;
-    }
+    // try to open the file for reading and writing
 
     configure(fd);
-    end = false;
+    canGet = true;
     isCelsius = true;
-    sleep(10); // wait for sensor to stabilize
+    sleep(6); // wait for sensor to stabilize
 }
 
 void* reading(void* p)
 {
     nowT = 0;
     total = 0;
-    char buffer[200] = {0};
+    char buffer[200];
     time_t now, pre = time(NULL);
     while(!end)
     {
-        int get = read(fd, buffer, 199);
-        if(get)
+        now = time(NULL);
+        if(now - pre >= 1)
         {
-            canGet = true;
-            now = time(NULL);
-            if(now - pre < 1)
+            int get = read(fd, buffer, 199);
+            if(get)
             {
-                continue;
-            }
-            pre = now;
-            double T;
-            vector<string> tokens;
-            split(tokens, buffer, boost::is_any_of(" "), boost::token_compress_on);
-            for(unsigned int i=0; i<tokens.size(); i++)
-            {
-                if(tokens[i]=="temperature" && tokens[i+1]=="is" && tokens[i+3]=="degrees")
+                pre = now;
+                double T;
+                vector<string> tokens;
+                split(tokens, buffer, boost::is_any_of(" "), boost::token_compress_on);
+                for(unsigned int i=0; i<tokens.size(); i++)
                 {
-                    string temp = tokens[i+2];
-                    T = atof(&temp[0]);
-                    now = time(NULL);
-                    nowT = T; // record the recent temperature
-                    total += T; // record the total temperature in the queue
-                    Temperature newT(T, now);
-                    record.push(newT);
-                    maxT.push(newT);
-                    minT.push(newT);
-                    cout<< "\nGet temp: " << T << endl;
-                    break;
+                    if(tokens[i]=="temperature" && tokens[i+1]=="is" && tokens[i+3]=="degrees")
+                    {
+                        string temp = tokens[i+2];
+                        T = atof(&temp[0]);
+                        now = time(NULL);
+                        nowT = T; // record the recent temperature
+                        total += T; // record the total temperature in the queue
+                        Temperature newT(T, now);
+                        record.push(newT);
+                        maxT.push(newT);
+                        minT.push(newT);
+                        cout<< "\nGet temp: " << T << endl;
+                        break;
+                    }
                 }
             }
+            else
+            {
+                now = time(NULL);
+                if(now - pre < 5)
+                {
+                    continue;
+                }
+                canGet = false;
+                cout << "\nDisconnected from sensor! Trying to reconnect..." << endl;
+                initUSB();
+            }
         }
-        else
-        {
-            canGet = false;
-            //sleep(10); //wait for sensor to restart
-        }
-        now = time(NULL);
+
         while(!record.empty() && (now - record.front().time > limit))
         {
             total -= record.front().temperature; // if the temperature is recorded an hour ago, then reduce it from total and pop from queue
@@ -157,14 +177,24 @@ void quit()
 
 void setCF()
 {
-    //write(fd, buffer, 199);
-    if(isCelsius)
+    char buffer[3];
+    buffer[0] = 'S';
+    int n = strlen(buffer);
+    if(write(fd, buffer, n) != n)
     {
-        isCelsius = false;
+        cout << "\nWrite failed!" << endl;
     }
     else
     {
-        isCelsius = true;
+        cout << "\nWritten to sensor." << endl;
+        if(isCelsius)
+        {
+            isCelsius = false;
+        }
+        else
+        {
+            isCelsius = true;
+        }
     }
 }
 
@@ -214,7 +244,7 @@ bool canGetT()
     return canGet;
 }
 
-string getJason()
+string getJson()
 {
     ostringstream real, avg, maxT, minT;
     real << getNow();
@@ -228,6 +258,8 @@ string getJason()
     string avgS = "\"average\": \"";
     string maxS = "\"max\": \"";
     string minS = "\"min\": \"";
-    string response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + tail;
+    string degreeS = "\"degree\": \"";
+    string CorF = isCelsius ? "C" : "F";
+    string response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + mid + tail;
     return response;
 }

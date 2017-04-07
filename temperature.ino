@@ -30,8 +30,6 @@
 
 #define COLD (23)      /* Cold temperature, drive blue LED (23c) */
 #define HOT (26)       /* Hot temperature, drive red LED (27c) */
-#define COLDF (73)
-#define HOTF (79)
 
 const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
                                  0x6D,0x7D,0x07,0x7F,0x6F, 
@@ -43,6 +41,9 @@ void Dis_7SEG (int, byte, byte, bool);
 void Send7SEG (byte, byte);
 void SerialMonitorPrint (byte, int, bool);
 void UpdateRGB (byte);
+
+/* Global value */
+bool isCelsius;
 
 /***************************************************************************
  Function Name: setup
@@ -57,7 +58,8 @@ void setup()
   Wire.begin();        /* Join I2C bus */
   pinMode(RED, OUTPUT);    
   pinMode(GREEN, OUTPUT);  
-  pinMode(BLUE, OUTPUT);   
+  pinMode(BLUE, OUTPUT);
+  isCelsius = 1;  
   delay(500);          /* Allow system to stabilize */
 } 
 
@@ -73,6 +75,7 @@ void loop()
   int Decimal;
   byte Temperature_H, Temperature_L, counter, counter2;
   bool IsPositive;
+  String comData = "";
   
   /* Configure 7-Segment to 12mA segment output current, Dynamic mode, 
      and Digits 1, 2, 3 AND 4 are NOT blanked */
@@ -115,6 +118,31 @@ void loop()
   
   while (1)
   {
+    /* If has income signal, then react. */
+    if(Serial.available()>0){
+      comData = Serial.readString(); Serial.print("Serial.readString:");  
+      Serial.println(comData);
+      digitalWrite(RED, LOW);
+      digitalWrite(GREEN, LOW);
+      digitalWrite(BLUE, LOW);
+      delay(250);
+      digitalWrite(RED, HIGH);
+      delay(250);
+      digitalWrite(RED, LOW);
+      digitalWrite(GREEN, HIGH);
+      delay(250);
+      digitalWrite(GREEN, LOW);
+      digitalWrite(BLUE, HIGH);
+      delay(250);
+      digitalWrite(BLUE, LOW);
+      if(isCelsius){
+        isCelsius = 0;
+      }
+      else{
+        isCelsius = 1;
+      }
+    }
+
     Wire.requestFrom(THERM, 2);
     Temperature_H = Wire.read();
     Temperature_L = Wire.read();
