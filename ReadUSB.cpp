@@ -14,6 +14,7 @@
 #include <vector>
 #include <queue>
 #include <ctime>
+#include <time.h>
 using namespace std;
 
 class Temperature
@@ -108,11 +109,11 @@ void* reading(void* p)
 {
     nowT = 0;
     total = 0;
-    char buffer[200];
     time_t now, pre = time(NULL);
     while(!end)
     {
         now = time(NULL);
+        char buffer[200] = {0};
         if(now - pre >= 1)
         {
             int get = read(fd, buffer, 199);
@@ -124,7 +125,11 @@ void* reading(void* p)
                 split(tokens, buffer, boost::is_any_of(" "), boost::token_compress_on);
                 for(unsigned int i=0; i<tokens.size(); i++)
                 {
-                    if(tokens[i]=="temperature" && tokens[i+1]=="is" && tokens[i+3]=="degrees")
+                    if(tokens[i]=="****End" && i!=0)
+                    {
+                        cout << "\nSerial.readString: \"" << tokens[i-1] << "\" End" << endl;
+                    }
+                    if(tokens[i]=="temperature" && i+1<tokens.size() && tokens[i+1]=="is" && i+3<tokens.size() && tokens[i+3]=="degrees")
                     {
                         string temp = tokens[i+2];
                         T = atof(&temp[0]);
@@ -143,7 +148,7 @@ void* reading(void* p)
             else
             {
                 now = time(NULL);
-                if(now - pre < 5)
+                if(now - pre < 6)
                 {
                     continue;
                 }
@@ -170,14 +175,9 @@ void* reading(void* p)
     return NULL;
 }
 
-void quit()
-{
-    end = true;
-}
-
 void setCF()
 {
-    char buffer[3];
+    char buffer[3] = {0};
     buffer[0] = 'S';
     int n = strlen(buffer);
     if(write(fd, buffer, n) != n)
@@ -186,7 +186,7 @@ void setCF()
     }
     else
     {
-        cout << "\nWritten to sensor." << endl;
+        cout << "\nWritten to sensor: " << buffer << endl;
         if(isCelsius)
         {
             isCelsius = false;
@@ -196,6 +196,39 @@ void setCF()
             isCelsius = true;
         }
     }
+}
+
+void showTime()
+{
+    time_t t;
+    struct tm * now;
+    time(&t);
+    now = localtime(&t);
+    cout << "Time now is: " << now->tm_hour << ":" << now->tm_min << endl;
+    char buffer[6] = {0};
+    buffer[0] = 'T';
+    buffer[1] = now->tm_hour<10 ? '0':(now->tm_hour)/10 + '0';
+    buffer[2] = now->tm_hour%10 + '0';
+    buffer[3] = now->tm_min<10 ? '0':(now->tm_min)/10 + '0';
+    buffer[4] = now->tm_min%10 + '0';
+    int n = strlen(buffer);
+    if(write(fd, buffer, n) != n)
+    {
+        cout << "\nWrite failed!" << endl;
+    }
+    else
+    {
+        cout << "\nWritten to sensor: " << buffer << endl;
+    }
+}
+
+void quit()
+{
+    if(!isCelsius)
+    {
+        setCF();
+    }
+    end = true;
 }
 
 double getNow()
@@ -260,6 +293,16 @@ string getJson()
     string minS = "\"min\": \"";
     string degreeS = "\"degree\": \"";
     string CorF = isCelsius ? "C" : "F";
-    string response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + mid + tail;
+    string disconnect = "Disconnected from sensor.";
+
+    string response;
+    if(canGet)
+    {
+        response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + mid + tail;
+    }
+    else
+    {
+        response = head + realS + disconnect + mid + avgS + disconnect + mid + maxS + disconnect + mid + minS + disconnect + mid + degreeS + "" + mid + tail;
+    }
     return response;
 }

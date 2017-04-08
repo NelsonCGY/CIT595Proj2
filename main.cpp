@@ -11,6 +11,7 @@ int initUSB();
 void* reading(void* p);
 void quit();
 void setCF();
+void showTime();
 string getJson();
 bool canGetT();
 
@@ -30,6 +31,10 @@ void* Quit(void* p)
         else if(q == "s")
         {
             setCF();
+        }
+        else if(q == "t")
+        {
+            showTime();
         }
     }
     running = false;
@@ -65,7 +70,7 @@ int main(int argc, char *argv[])
         pre = now;
         if(!canGetT())
         {
-            cout << "\nDisconnected!" << endl;
+            cout << "\nDisconnected!" << "\nSend response:\n" << getJson() << endl;
         }
         else
         {
