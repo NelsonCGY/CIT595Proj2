@@ -116,16 +116,14 @@ int start_server(int PORT_NUMBER)
 	    cout << request_char << endl;
 
 	    /* parse post reqeust */
-	    char* token;
-	    char key[1024];
-	    strtok(request_char, "\n");
-	    while(token != NULL) {
-	    	strcpy(key, token);
-	    	token = strtok(NULL, "\n");
-	    }
-
+	    char line[128] = {0};
+	    strcpy(line, strstr(request_char, "Content-Length");
+	    char* len_str;
+	    len_str = strtok(line, " \n\t\r");
+	    len_str = strtok(NULL, " \n\t\r");
+	
 	    /* CF conversion */
-	    if (strncmp(key, "unit", 4) == 0) setCF();
+	    if (atoi(len_str) == 6) setCF();
 
 	    string reply = getJason();
 	    send(listenfd, reply.c_str(), reply.size(), 0);
