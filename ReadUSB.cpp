@@ -47,6 +47,7 @@ struct cmpMin
 
 int limit = 10; // time limit of keeping records
 int fd;
+string file;
 bool end;
 bool isCelsius;
 bool canGet;
@@ -68,10 +69,12 @@ void configure(int fd)
     tcsetattr(fd, TCSANOW, &pts);
 }
 
-void initUSB()
+void initUSB(string port)
 {
-    string file = "/dev/ttyACM0"; // auto detect USB port, need to change on different computer
-    char portN = '1';
+    file = port; // auto detect USB port, need to change on different computer
+    int endC = file.length() - 1;
+    char portN = '0';
+
     while(!end)
     {
         char* argv = &file[0];
@@ -81,8 +84,8 @@ void initUSB()
         {
             sleep(1);
             cout << "\nFailed to open port number " << file << endl;
-            file[11] = portN;
-            if(portN == '5')
+            file[endC] = portN;
+            if(portN == '9')
             {
                 portN = '0';
             }
@@ -154,7 +157,7 @@ void* reading(void* p)
                 }
                 canGet = false;
                 cout << "\nDisconnected from sensor! Trying to reconnect..." << endl;
-                initUSB();
+                initUSB(file);
             }
         }
 
@@ -177,8 +180,12 @@ void* reading(void* p)
 
 void setCF()
 {
-    char buffer[3] = {0};
+    char buffer[6] = {0};
     buffer[0] = 'S';
+    buffer[1] = 'E';
+    buffer[2] = 'T';
+    buffer[3] = 'C';
+    buffer[4] = 'F';
     int n = strlen(buffer);
     if(write(fd, buffer, n) != n)
     {
@@ -205,12 +212,16 @@ void showTime()
     time(&t);
     now = localtime(&t);
     cout << "Time now is: " << now->tm_hour << ":" << now->tm_min << endl;
-    char buffer[6] = {0};
-    buffer[0] = 'T';
-    buffer[1] = now->tm_hour<10 ? '0':(now->tm_hour)/10 + '0';
-    buffer[2] = now->tm_hour%10 + '0';
-    buffer[3] = now->tm_min<10 ? '0':(now->tm_min)/10 + '0';
-    buffer[4] = now->tm_min%10 + '0';
+    char buffer[11] = {0};
+    buffer[0] = 'S';
+    buffer[1] = 'H';
+    buffer[2] = 'O';
+    buffer[3] = 'W';
+    buffer[4] = 'T';
+    buffer[5] = now->tm_hour<10 ? '0':(now->tm_hour)/10 + '0';
+    buffer[6] = now->tm_hour%10 + '0';
+    buffer[7] = now->tm_min<10 ? '0':(now->tm_min)/10 + '0';
+    buffer[8] = now->tm_min%10 + '0';
     int n = strlen(buffer);
     if(write(fd, buffer, n) != n)
     {
@@ -285,7 +296,7 @@ string getJson()
     maxT << getMax();
     minT << getMin();
     string head = "{\n";
-    string mid = "\",";
+    string mid = "\"\n";
     string tail = "}\n";
     string realS = "\"real\": \"";
     string avgS = "\"average\": \"";

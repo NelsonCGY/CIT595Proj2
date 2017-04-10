@@ -7,7 +7,7 @@
 #include <ctime>
 using namespace std;
 
-int initUSB();
+int initUSB(string argv);
 void* reading(void* p);
 void quit();
 void setCF();
@@ -44,17 +44,17 @@ void* Quit(void* p)
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        cout << "Please specify port number!" << endl;
+        cout << "Please specify USB port number and network port number!" << endl;
         exit(0);
     }
-    initUSB();
+    initUSB(argv[1]);
     pthread_t read; // thread for reading from sensor
     pthread_t shut; // thread for shutting down the system
     if(pthread_create(&read,NULL,reading,NULL)!=0 || pthread_create(&shut,NULL,Quit,NULL)!=0)
     {
-        perror("read create failed");
+        perror("thread create failed");
         exit(0);
     }
     running = true;
