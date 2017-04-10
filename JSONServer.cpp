@@ -21,7 +21,7 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <string.h>
 using namespace std;
 
-int initUSB(char *argv);
+int initUSB(string argv);
 void* reading(void* p);
 void quit();
 void setCF();
@@ -40,7 +40,8 @@ int main(int argc, char *argv[])
     		exit(0);
 	}
 
-	initUSB(argv[2]);
+	string var = argv[2];
+	initUSB(var);
 
 	pthread_t read_thread;
 	pthread_t shut; // thread for shutting down the system
