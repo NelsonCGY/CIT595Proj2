@@ -121,7 +121,7 @@ void* reading(void* p)
         if(now - pre >= 1)
         {
             int get = read(fd, buffer, 199);
-            if(get)
+            if(get > 0)
             {
                 pre = now;
                 double T;
