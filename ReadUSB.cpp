@@ -297,7 +297,7 @@ string getJson()
     minT << getMin();
     string head = "{\n";
     string mid = "\",";
-    string tail = "}\n";
+    string tail = "\"}\n";
     string realS = "\"real\": \"";
     string avgS = "\"average\": \"";
     string maxS = "\"max\": \"";
@@ -309,11 +309,11 @@ string getJson()
     string response;
     if(canGet)
     {
-        response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + mid + tail;
+        response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + tail;
     }
     else
     {
-        response = head + realS + disconnect + mid + avgS + disconnect + mid + maxS + disconnect + mid + minS + disconnect + mid + degreeS + "" + mid + tail;
+        response = head + realS + disconnect + mid + avgS + disconnect + mid + maxS + disconnect + mid + minS + disconnect + mid + degreeS + "" + tail;
     }
     return response;
 }
