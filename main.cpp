@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
         perror("thread create failed");
         exit(0);
     }
-    initUSB(argv[1]);
+    initUSB(argv[2]);
     pthread_t read; // thread for reading from sensor
     if(pthread_create(&read,NULL,reading,NULL)!=0)
     {
