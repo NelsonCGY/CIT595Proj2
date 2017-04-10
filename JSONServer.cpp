@@ -25,7 +25,7 @@ int initUSB(string argv);
 void* reading(void* p);
 void quit();
 void setCF();
-string getJason();
+string getJson();
 bool canGetT();
 
 int start_server(int);
@@ -98,7 +98,6 @@ int start_server(int PORT_NUMBER)
 	    int listenfd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
 	    cout << "Server got a connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << endl;
 	    cout << "Here comes the message:" << endl;
-	    char request_char[1024] = {0};
 		
 	    char line[1024] = {0};
 	    char len_char[256] = {0};
@@ -127,7 +126,7 @@ int start_server(int PORT_NUMBER)
 	    if (atoi(len_char) == 6) setCF();
 	    //or if (content == "switch") setCF();
 
-	    string reply = getJason();
+	    string reply = getJson();
 	    send(listenfd, reply.c_str(), reply.size(), 0);
     	printf("Server sent message: %s\n", reply.c_str());
 	}
