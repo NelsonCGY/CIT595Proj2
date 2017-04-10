@@ -296,7 +296,7 @@ string getJson()
     maxT << getMax();
     minT << getMin();
     string head = "{\n";
-    string mid = "\"\n";
+    string mid = "\",";
     string tail = "}\n";
     string realS = "\"real\": \"";
     string avgS = "\"average\": \"";
