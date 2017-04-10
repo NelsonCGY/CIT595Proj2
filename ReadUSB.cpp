@@ -48,7 +48,7 @@ struct cmpMin
 int limit = 10; // time limit of keeping records
 int fd;
 string file;
-bool end;
+bool finish;
 bool isCelsius;
 bool canGet;
 queue<Temperature> record; // record temperature and time
@@ -76,7 +76,7 @@ void initUSB(string port)
     char portN = '0';
     isCelsius = true;
 
-    while(!end)
+    while(!finish)
     {
         char* argv = &file[0];
         fd = open(argv, O_RDWR | O_NOCTTY | O_NDELAY);
@@ -113,7 +113,7 @@ void* reading(void* p)
     nowT = 0;
     total = 0;
     time_t now, pre = time(NULL);
-    while(!end)
+    while(!finish)
     {
         now = time(NULL);
         char buffer[200] = {0};
@@ -239,7 +239,7 @@ void quit()
     {
         setCF();
     }
-    end = true;
+    finish = true;
 }
 
 double getNow()
