@@ -1,7 +1,7 @@
 CC = c++
 ARGS = -Wall
 
-all: server main
+all: clean server main
 
 server:
 	$(CC) -pthread -o server $(ARGS) JSONServer.cpp ReadUSB.cpp -I ./boost_1_60_0/
