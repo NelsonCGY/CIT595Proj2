@@ -45,12 +45,12 @@ int main(int argc, char *argv[])
 
     string var = argv[2];
 
-    initUSB(var);
     if(pthread_create(&shut,NULL,Quit,NULL)!=0)
     {
-        perror("thread create failed");
+        perror("shut create failed");
         exit(0);
     }
+    initUSB(var);
 
     if(pthread_create(&read_thread,NULL,reading,NULL)!=0)
     {
@@ -107,7 +107,7 @@ int start_server(int PORT_NUMBER)
     {
         int sin_size = sizeof(struct sockaddr_in);
         int listenfd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
-        cout << "Server got a connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << endl;
+        cout << "\nServer got a connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << endl;
         cout << "Here comes the message:" << endl;
 
         char line[1024] = {0};
@@ -144,11 +144,11 @@ int start_server(int PORT_NUMBER)
 
         string reply = getJson();
         send(listenfd, reply.c_str(), reply.size(), 0);
-        printf("Server sent message: %s\n", reply.c_str());
+        printf("\nServer sent message: %s\n", reply.c_str());
     }
 
     close(sock);
-    cout << "Server closed connection" << endl;
+    cout << "\nServer closed connection" << endl;
     return 0;
 }
 
@@ -165,8 +165,8 @@ void* Quit(void* p)
         }
     }
     running = false;
-    cout << "Request to quit!" << endl;
+    cout << "\nRequest to quit!" << endl;
     pthread_join(read_thread, NULL);
-    cout << "System shut down." << endl;
+    cout << "\nSystem shut down." << endl;
     exit(0);
 }

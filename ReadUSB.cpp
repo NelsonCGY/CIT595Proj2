@@ -211,7 +211,7 @@ void showTime()
     struct tm * now;
     time(&t);
     now = localtime(&t);
-    cout << "Time now is: " << now->tm_hour << ":" << now->tm_min << endl;
+    cout << "\nTime now is: " << now->tm_hour << ":" << now->tm_min << endl;
     char buffer[11] = {0};
     buffer[0] = 'S';
     buffer[1] = 'H';
