@@ -72,7 +72,7 @@ void configure(int fd)
 
 void initUSB(string port)
 {
-    file = port; // auto detect USB port, need to change on different computer
+    file = port; // auto detect USB port
     int endC = file.length() - 1;
     char portN = '0';
     isCelsius = true;
