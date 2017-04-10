@@ -20,7 +20,6 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <vector>
 #include <string.h>
 using namespace std;
-using namespace boost;
 
 int initUSB(char *argv);
 void* reading(void* p);
