@@ -15,6 +15,7 @@
 #include <queue>
 #include <ctime>
 #include <time.h>
+#include <sys/stat.h>
 using namespace std;
 
 class Temperature
