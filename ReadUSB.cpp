@@ -74,6 +74,7 @@ void initUSB(string port)
     file = port; // auto detect USB port, need to change on different computer
     int endC = file.length() - 1;
     char portN = '0';
+    isCelsius = true;
 
     while(!end)
     {
@@ -104,7 +105,6 @@ void initUSB(string port)
 
     configure(fd);
     canGet = true;
-    isCelsius = true;
     sleep(6); // wait for sensor to stabilize
 }
 
