@@ -9,7 +9,6 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <boost/algorithm/string.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -19,6 +18,7 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <iostream>
 #include <ctime>
 #include <vector>
+#include <string.h>
 using namespace std;
 using namespace boost;
 
@@ -56,16 +56,6 @@ int main(int argc, char *argv[])
 
 	pthread_join(read_thread, NULL);
 	pthread_join(shut, NULL);
-}
-
-//tentatively
-void parse_request(string request, string& key, string& value) {
-	int start = request.find("|");
-	string sub = request.substr(start + 1);
-	vector<string> tokens;
-	split(tokens, sub, boost::is_any_of(" "), boost::token_compress_on);
-	key = tokens[1];
-	value = tokens[2];
 }
 
 int start_server(int PORT_NUMBER)
@@ -112,6 +102,7 @@ int start_server(int PORT_NUMBER)
 		
 	    char line[1024] = {0};
 	    char len_char[256] = {0};
+	    string content;
 	    FILE *fp = fdopen(listenfd, "r");
 	    if (fp != NULL) {
 		while(fgets(line, 1024, fp) != NULL) {
@@ -133,7 +124,8 @@ int start_server(int PORT_NUMBER)
 	    }
 	
 	    /* CF conversion */
-	    if (atoi(len_str) == 6) setCF();
+	    if (atoi(len_char) == 6) setCF();
+	    //or if (content == "switch") setCF();
 
 	    string reply = getJason();
 	    send(listenfd, reply.c_str(), reply.size(), 0);
