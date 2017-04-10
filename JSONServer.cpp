@@ -107,20 +107,30 @@ int start_server(int PORT_NUMBER)
 	    int sin_size = sizeof(struct sockaddr_in);
 	    int listenfd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
 	    cout << "Server got a connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << endl;
-	      
-	    char request_char[1024] = {0};
-	      
-	    int bytes_received = recv(listenfd,request_char,1024,0);
-	    request_char[bytes_received] = '\0';
 	    cout << "Here comes the message:" << endl;
-	    cout << request_char << endl;
-
-	    /* parse post reqeust */
-	    char line[128] = {0};
-	    strcpy(line, strstr(request_char, "Content-Length");
-	    char* len_str;
-	    len_str = strtok(line, " \n\t\r");
-	    len_str = strtok(NULL, " \n\t\r");
+	    char request_char[1024] = {0};
+		
+	    char line[1024] = {0};
+	    char len_char[256] = {0};
+	    FILE *fp = fdopen(listenfd, "r");
+	    if (fp != NULL) {
+		while(fgets(line, 1024, fp) != NULL) {
+		    cout << line;
+		    if (strncmp(line, "Content-Length", 14) == 0) {
+	    		strtok(line, " ");
+			strcpy(len_char, strtok(NULL, " "));
+		    }
+		    if (strcmp(line, "\r\n") == 0) {
+			bzero(line, 1024);
+			break;
+		    }
+		    bzero(line, 1024);
+		}
+		while(fgets(line, 1024, fp) != NULL) {
+		    content += line;
+		    bzero(line, 1024);
+		}
+	    }
 	
 	    /* CF conversion */
 	    if (atoi(len_str) == 6) setCF();
