@@ -12,6 +12,7 @@ void* reading(void* p);
 void quit();
 void setCF();
 void showTime();
+void setStandby();
 string getJson();
 bool canGetT();
 
@@ -35,6 +36,10 @@ void* Quit(void* p)
         else if(q == "t")
         {
             showTime();
+        }
+        else if(q == "b")
+        {
+            setStandby();
         }
     }
     running = false;

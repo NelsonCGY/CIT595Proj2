@@ -45,6 +45,7 @@ void UpdateRGB (byte);
 
 /* Global value */
 bool isCelsius;
+bool isStandby;
 
 /***************************************************************************
  * Function Name: setup
@@ -60,7 +61,8 @@ void setup()
   pinMode(RED, OUTPUT);    
   pinMode(GREEN, OUTPUT);  
   pinMode(BLUE, OUTPUT);
-  isCelsius = 1;  
+  isCelsius = 1;
+  isStandby = 0; 
   Serial.flush();
   delay(500);          /* Allow system to stabilize */
 } 
@@ -147,7 +149,8 @@ void loop()
       Serial.print(" ****End Reading.");
       Serial.flush();
       if(comData[0] == 'S' && ((comData[1] == 'E' && comData[2] == 'T' && comData[3] == 'C' && comData[4] == 'F') || 
-        (comData[1] == 'H' && comData[2] == 'O' && comData[3] == 'W' && comData[4] == 'T')))
+        (comData[1] == 'H' && comData[2] == 'O' && comData[3] == 'W' && comData[4] == 'T') || 
+        (comData[1] == 'T' && comData[2] == 'A' && comData[3] == 'N' && comData[4] == 'D')))
       {
         /* Advanced reaction: change temperature unit or show time */
         if(comData[4] == 'F')
@@ -174,6 +177,17 @@ void loop()
           Send7SEG (1,NumberLookup[ml]);
           delay(3000);
           digitalWrite(BLUE, LOW);
+        }
+        else if(comData[4] == 'D')
+        {
+          if(isStandby)
+          {
+            isStandby = 0;
+          }
+          else
+          {
+            isStandby = 1;
+          }
         }
       }
     }
@@ -267,60 +281,70 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
   byte Digit = 4;                 /* Number of 7-Segment digit */
   byte Number;                    /* Temporary variable hold the number to display */
 
-  if (sign == 0)                  /* When the temperature is negative */
+  if(isStandby)
   {
-    Send7SEG(Digit,0x40);         /* Display "-" sign */
-    Digit--;                      /* Decrement number of digit */
+    Send7SEG (4,0x6D);
+    Send7SEG (3,0x07);
+    Send7SEG (2,0x77);
+    Send7SEG (1,0x6E);
   }
-
-  if (High > 99)                  /* When the temperature is three digits long */
+  else
   {
-    Number = High / 100;          /* Get the hundredth digit */
-    Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
-    High = High % 100;            /* Remove the hundredth digit from the TempHi */
-    Digit--;                      /* Subtract 1 digit */
-
-  }
-
-  if (High > 9)
-  {
-    Number = High / 10;           /* Get the tenth digit */
-    Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
-    High = High % 10;            /* Remove the tenth digit from the TempHi */
-    Digit--;                      /* Subtract 1 digit */
-  }
-
-  Number = High;                  /* Display the last digit */
-  Number = NumberLookup [Number]; 
-  if (Digit > 1)                  /* Display "." if it is not the last digit on 7-SEG */
-  {
-    Number = Number | B10000000;
-  }
-  Send7SEG (Digit,Number);  
-  Digit--;                        /* Subtract 1 digit */
-
-  if (Digit > 0)                  /* Display decimal point if there is more space on 7-SEG */
-  {
-    Number = Decimal / 1000;
-    Send7SEG (Digit,NumberLookup[Number]);
-    Digit--;
-  }
-
-  if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
-  {
-    if (isCelsius){
-      Send7SEG (Digit,0x39);
+    if (sign == 0)                  /* When the temperature is negative */
+    {
+      Send7SEG(Digit,0x40);         /* Display "-" sign */
+      Digit--;                      /* Decrement number of digit */
     }
-    else{
-      Send7SEG (Digit,0x71);
-    }    
-    Digit--;
-  }
 
-  if (Digit > 0)                 /* Clear the rest of the digit */
-  {
-    Send7SEG (Digit,0x00);    
-  }  
+    if (High > 99)                  /* When the temperature is three digits long */
+    {
+      Number = High / 100;          /* Get the hundredth digit */
+      Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
+      High = High % 100;            /* Remove the hundredth digit from the TempHi */
+      Digit--;                      /* Subtract 1 digit */
+
+    }
+
+    if (High > 9)
+    {
+      Number = High / 10;           /* Get the tenth digit */
+      Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
+      High = High % 10;            /* Remove the tenth digit from the TempHi */
+      Digit--;                      /* Subtract 1 digit */
+    }
+
+    Number = High;                  /* Display the last digit */
+    Number = NumberLookup [Number]; 
+    if (Digit > 1)                  /* Display "." if it is not the last digit on 7-SEG */
+    {
+      Number = Number | B10000000;
+    }
+    Send7SEG (Digit,Number);  
+    Digit--;                        /* Subtract 1 digit */
+
+    if (Digit > 0)                  /* Display decimal point if there is more space on 7-SEG */
+    {
+      Number = Decimal / 1000;
+      Send7SEG (Digit,NumberLookup[Number]);
+      Digit--;
+    }
+
+    if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
+    {
+      if (isCelsius){
+        Send7SEG (Digit,0x39);
+      }
+      else{
+        Send7SEG (Digit,0x71);
+      }    
+      Digit--;
+    }
+
+    if (Digit > 0)                 /* Clear the rest of the digit */
+    {
+      Send7SEG (Digit,0x00);    
+    }
+  }
 }
 
 /***************************************************************************
@@ -350,18 +374,24 @@ void UpdateRGB (byte Temperature_H)
   digitalWrite(RED, LOW);
   digitalWrite(GREEN, LOW);
   digitalWrite(BLUE, LOW);        /* Turn off all LEDs. */
-
-  if (Temperature_H <= COLD)
+  if(isStandby)
   {
     digitalWrite(BLUE, HIGH);
   }
-  else if (Temperature_H >= HOT)
+  else
   {
-    digitalWrite(RED, HIGH);
-  }
-  else 
-  {
-    digitalWrite(GREEN, HIGH);
+    if (Temperature_H <= COLD)
+    {
+      digitalWrite(BLUE, HIGH);
+    }
+    else if (Temperature_H >= HOT)
+    {
+      digitalWrite(RED, HIGH);
+    }
+    else 
+    {
+      digitalWrite(GREEN, HIGH);
+    }
   }
 }
 
@@ -373,17 +403,29 @@ void UpdateRGB (byte Temperature_H)
  ****************************************************************************/
 void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive)
 {
-  Serial.print("The temperature is ");
-  if (!IsPositive)
+  if(isStandby)
   {
-    Serial.print("-");
+    Serial.print("Standby mode...");
   }
-  Serial.print(Temperature_H, DEC);
-  Serial.print(".");
-  Serial.print(Decimal, DEC);
-  Serial.print(" degrees C");
+  else
+  {
+    Serial.print("The temperature is ");
+    if (!IsPositive)
+    {
+      Serial.print("-");
+    }
+    Serial.print(Temperature_H, DEC);
+    Serial.print(".");
+    Serial.print(Decimal, DEC);
+    Serial.print(" degrees C");
+  }
   Serial.print("\n\n");
 }
+
+
+
+
+
 
 
 

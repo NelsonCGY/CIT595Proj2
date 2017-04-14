@@ -46,7 +46,7 @@ struct cmpMin
     }
 } ;
 
-int limit = 10; // time limit of keeping records
+int limit = 3600; // time limit of keeping records
 int fd;
 string file;
 bool finish;
@@ -234,6 +234,25 @@ void showTime()
     }
 }
 
+void setStandby()
+{
+    char buffer[6] = {0};
+    buffer[0] = 'S';
+    buffer[1] = 'T';
+    buffer[2] = 'A';
+    buffer[3] = 'N';
+    buffer[4] = 'D';
+    int n = strlen(buffer);
+    if(write(fd, buffer, n) != n)
+    {
+        cout << "\nWrite failed!" << endl;
+    }
+    else
+    {
+        cout << "\nWritten to sensor: " << buffer << endl;
+    }
+}
+
 void quit()
 {
     if(!isCelsius)
@@ -255,8 +274,8 @@ double getNow()
 double getAvg()
 {
     double avg;
-    int n = record.empty()? 1 : record.size();
-    avg = total/(double)n;
+    int n = record.size();
+    avg = (n==0)? 0.0 : total/(double)n;
     if(isCelsius)
     {
         return avg;
