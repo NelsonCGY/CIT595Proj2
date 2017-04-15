@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     if(pthread_create(&shut,NULL,Quit,NULL)!=0)
     {
         perror("thread create failed");
-        exit(0);
+        exit(1);
     }
     string var = argv[2];
     initUSB(var);
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     if(pthread_create(&read_thread,NULL,reading,NULL)!=0)
     {
         perror("thread create failed");
-        exit(0);
+        exit(1);
     }
     running = true;
 

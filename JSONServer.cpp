@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     if (pthread_create(&shut,NULL,Quit,NULL)!=0)
     {
         perror("create shut failed");
-        exit(0);
+        exit(1);
     }
 
     string var = argv[2];
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     if(pthread_create(&read_thread,NULL,reading,NULL)!=0)
     {
         perror("read create failed");
-        exit(0);
+        exit(1);
     }
 
     running = true;
