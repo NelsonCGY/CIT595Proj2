@@ -13,8 +13,12 @@ void quit();
 void setCF();
 void showTime();
 void setStandby();
+void setThreshold(bool up);
 string getJson();
 bool canGetT();
+
+pthread_t read_thread; // thread for reading from sensor
+pthread_t shut; // thread for shutting down the system
 
 bool running;
 
@@ -41,10 +45,20 @@ void* Quit(void* p)
         {
             setStandby();
         }
+        else if(q == "u")
+        {
+            setThreshold(true);
+        }
+        else if(q == "d")
+        {
+            setThreshold(false);
+        }
     }
     running = false;
     cout << "\nRequest to quit!" << endl;
-    return NULL;
+    pthread_join(read_thread, NULL);
+    cout << "\nSystem shut down." << endl;
+    exit(0);
 }
 
 int main(int argc, char *argv[])
@@ -54,15 +68,16 @@ int main(int argc, char *argv[])
         cout << "Please specify USB port number and network port number!" << endl;
         exit(0);
     }
-    pthread_t shut; // thread for shutting down the system
+
     if(pthread_create(&shut,NULL,Quit,NULL)!=0)
     {
         perror("thread create failed");
         exit(0);
     }
-    initUSB(argv[2]);
-    pthread_t read; // thread for reading from sensor
-    if(pthread_create(&read,NULL,reading,NULL)!=0)
+    string var = argv[2];
+    initUSB(var);
+
+    if(pthread_create(&read_thread,NULL,reading,NULL)!=0)
     {
         perror("thread create failed");
         exit(0);
@@ -88,7 +103,4 @@ int main(int argc, char *argv[])
         }
     }
 
-    pthread_join(read, NULL);
-    pthread_join(shut, NULL);
-    cout << "\nSystem shut down." << endl;
 }

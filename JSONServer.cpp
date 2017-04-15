@@ -27,10 +27,11 @@ void quit();
 void setCF();
 void showTime();
 void setStandby();
+void setThreshold(bool up);
 string getJson();
 bool canGetT();
 
-pthread_t read_thread;
+pthread_t read_thread; // thread for reading from sensor
 pthread_t shut; // thread for shutting down the system
 
 int start_server(int);
@@ -137,6 +138,9 @@ int start_server(int PORT_NUMBER)
         if (atoi(len_char) == 6) setCF();
         if (atoi(len_char) == 4) showTime();
         if (atoi(len_char) == 7) setStandby();
+        if (atoi(len_char) == 13) setThreshold(true);
+        if (atoi(len_char) == 15) setThreshold(false);
+
 
         cout << "after setCF\n";
         string reply = getJson();

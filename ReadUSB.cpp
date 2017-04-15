@@ -46,7 +46,8 @@ struct cmpMin
     }
 } ;
 
-int limit = 3600; // time limit of keeping records
+int timeLimit = 3600; // time limit of keeping records
+int tempLimit = 30;
 int fd;
 string file;
 bool finish;
@@ -162,16 +163,16 @@ void* reading(void* p)
             }
         }
 
-        while(!record.empty() && (now - record.front().time > limit))
+        while(!record.empty() && (now - record.front().time > timeLimit))
         {
             total -= record.front().temperature; // if the temperature is recorded an hour ago, then reduce it from total and pop from queue
             record.pop();
         }
-        while(!maxT.empty() && (now - maxT.top().time > limit))
+        while(!maxT.empty() && (now - maxT.top().time > timeLimit))
         {
             maxT.pop();
         }
-        while(!minT.empty() && (now - minT.top().time > limit))
+        while(!minT.empty() && (now - minT.top().time > timeLimit))
         {
             minT.pop();
         }
@@ -253,6 +254,20 @@ void setStandby()
     }
 }
 
+void setThreshold(bool up)
+{
+    if(up)
+    {
+        tempLimit += (tempLimit>=50)? 0:1;
+        cout << "\nTemperature threshold up. Now: " << tempLimit << endl;
+    }
+    else
+    {
+        tempLimit -= (tempLimit<=25)? 0:1;
+        cout << "\nTemperature threshold down. Now: " << tempLimit << endl;
+    }
+}
+
 void quit()
 {
     if(!isCelsius)
@@ -324,16 +339,18 @@ string getJson()
     string minS = "\"min\": \"";
     string degreeS = "\"degree\": \"";
     string CorF = isCelsius ? "C" : "F";
+    string alert = "\"alert\": \"";
+    string exceed = (nowT>tempLimit)? "1" : "0";
     string disconnect = "Disconnected from sensor.";
 
     string response;
     if(canGet)
     {
-        response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + tail;
+        response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + mid + alert + exceed + tail;
     }
     else
     {
-        response = head + realS + disconnect + mid + avgS + disconnect + mid + maxS + disconnect + mid + minS + disconnect + mid + degreeS + "" + tail;
+        response = head + realS + disconnect + mid + avgS + disconnect + mid + maxS + disconnect + mid + minS + disconnect + mid + degreeS + disconnect + mid + alert + disconnect + tail;
     }
     return response;
 }
