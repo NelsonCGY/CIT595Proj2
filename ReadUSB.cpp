@@ -88,7 +88,7 @@ void initUSB(string port)
             sleep(1);
             cout << "\nFailed to open port number " << file << endl;
             file[endC] = portN;
-            if(portN == '9')
+            if(portN == '5')
             {
                 portN = '0';
             }
@@ -341,16 +341,16 @@ string getJson()
     string CorF = isCelsius ? "C" : "F";
     string alert = "\"alert\": \"";
     string exceed = (nowT>tempLimit)? "1" : "0";
-    string disconnect = "Disconnected from sensor.";
+    string disconnect = "SensorError";
 
     string response;
     if(canGet)
     {
-        response =  head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + mid + alert + exceed + tail;
+        response = head + realS + real.str() + mid + avgS + avg.str() + mid + maxS + maxT.str() + mid + minS + minT.str() + mid + degreeS + CorF + mid + alert + exceed + tail;
     }
     else
     {
-        response = head + realS + disconnect + mid + avgS + disconnect + mid + maxS + disconnect + mid + minS + disconnect + mid + degreeS + disconnect + mid + alert + disconnect + tail;
+        response = head + realS + disconnect + mid + avgS + disconnect + mid + maxS + disconnect + mid + minS + disconnect + mid + degreeS + CorF + mid + alert + exceed + tail;
     }
     return response;
 }
