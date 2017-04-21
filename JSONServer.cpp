@@ -138,8 +138,8 @@ int start_server(int PORT_NUMBER)
         if (atoi(len_char) == 6) setCF();
         if (atoi(len_char) == 4) showTime();
         if (atoi(len_char) == 7) setStandby();
-        if (atoi(len_char) == 13) setThreshold(true);
-        if (atoi(len_char) == 15) setThreshold(false);
+        //if (atoi(len_char) == 13) setThreshold(true);
+        //if (atoi(len_char) == 15) setThreshold(false);
 
 
         cout << "after setCF\n";
