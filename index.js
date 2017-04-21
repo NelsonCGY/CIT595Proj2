@@ -5,7 +5,12 @@ Pebble.addEventListener("appmessage",
           sendToServer("temperature"); 
         }else if(e.payload.switch){
           sendToServer("switch");
-        }else{
+        }else if(e.payload.hour){
+          sendToServer("time");
+        }else if(e.payload.standby){
+          sendToServer("standby");
+        }
+        else{
           Pebble.sendAppMessage({"0": "nokey"});
         }
       }else{
@@ -15,38 +20,45 @@ Pebble.addEventListener("appmessage",
 );
 function sendToServer(param) {
     var req = new XMLHttpRequest();
-    var ipAddress = "192.168.1.12"; // Hard coded IP address
+    var ipAddress = "158.130.169.90"; // Hard coded IP address
     var port = "3001"; // Same port specified as argument to server 
     var url = "http://" + ipAddress + ":" + port + "/";
     var method = "POST";
     var async = true;
+    req.timeout = 3500;
     req.onload = function(e) {
         // see what came back
         var msg = "no response";
         var response = JSON.parse(req.responseText); 
         if (response) {
           if (response.real) {
-            msg = "N: " + response.real + "\n";
+            msg = "Now: " + response.real + "\n";
             if(response.average){
-              msg += "A: " + response.average + "\n";
+              msg += "Ave: " + response.average + "\n";
             }
             if(response.max){
-              msg += "M: " + response.max + "\n";
+              msg += "Max: " + response.max + "\n";
             }
             if(response.min){
-              msg += "M: " + response.min + "\n";
+              msg += "Min: " + response.min + "\n";
             }
             if(response.degree){
-              msg += "D: " + response.degree + "\n";
+              msg += "Unit: " + response.degree + "\n";
             }
-            
-          }else msg = "notemp"; 
+          }else if(response.time){
+            msg = " Current time:\n" + response.time + "\n";
+          }
+          else msg = "notemp&time";           
         }
         // sends message back to pebble 
-        Pebble.sendAppMessage({ "0": msg });
+        if(param != "standby") Pebble.sendAppMessage({ "0": msg });
+    };
+    req.ontimeout = function(e) {
+      Pebble.sendAppMessage({ "0": "timeout" });
+    };
+    req.onerror = function(e) {
+      Pebble.sendAppMessage({ "0": "network error" });
     };
     req.open(method, url, async);
-    if(param == "temperature"){
-      req.send("temperature");
-    }else req.send("switch");
+    req.send(param);
 }
